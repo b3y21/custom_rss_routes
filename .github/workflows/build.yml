@@ -1,0 +1,84 @@
+name: Build custom RSSHub
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+    paths:
+      - "routes/**"
+      - ".github/workflows/build.yml"
+
+  schedule:
+    # 每天 UTC 04:00 构建一次
+    # 北京时间 12:00
+    - cron: "0 4 * * *"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout custom routes
+        uses: actions/checkout@v6
+        with:
+          path: custom
+
+      - name: Clone latest RSSHub
+        run: |
+          git clone --depth=1 https://github.com/DIYgod/RSSHub.git rsshub
+
+      - name: Show RSSHub version
+        working-directory: rsshub
+        run: |
+          echo "RSSHub commit:"
+          git rev-parse HEAD
+
+      - name: Copy custom routes
+        run: |
+          cp -rv custom/routes/* rsshub/lib/routes/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare image name
+        id: image
+        shell: bash
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/rsshub-custom"
+          echo "name=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Get RSSHub commit
+        id: rsshub
+        working-directory: rsshub
+        shell: bash
+        run: |
+          SHA=$(git rev-parse HEAD)
+          SHORT_SHA=$(git rev-parse --short=12 HEAD)
+
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./rsshub
+          file: ./rsshub/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ steps.rsshub.outputs.short_sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
