@@ -1,7 +1,7 @@
 import type { Data, Route } from '@/types';
 import { parseDate } from '@/utils/parse-date';
 
-import { createFetch, getCategoryMap, rootUrl } from './utils';
+import { fetchJson, getCategoryMap, rootUrl } from './utils';
 
 export const route: Route = {
     path: '/latest',
@@ -15,13 +15,17 @@ export const route: Route = {
     ],
     name: '最新话题',
     maintainers: [],
+    features: {
+        requirePuppeteer: true,
+        antiCrawler: true,
+    },
     handler,
 };
 
 async function handler(ctx): Promise<Data> {
     const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30;
 
-    const { topic_list } = await createFetch('/latest.json');
+    const { topic_list } = await fetchJson('/latest.json');
     const categoryMap = await getCategoryMap();
 
     const items = topic_list.topics.slice(0, limit).map((topic) => ({

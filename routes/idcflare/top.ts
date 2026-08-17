@@ -1,7 +1,7 @@
 import type { Data, Route } from '@/types';
 import { parseDate } from '@/utils/parse-date';
 
-import { createFetch, getCategoryMap, rootUrl } from './utils';
+import { fetchJson, getCategoryMap, rootUrl } from './utils';
 
 export const route: Route = {
     path: '/top/:period?',
@@ -10,6 +10,10 @@ export const route: Route = {
     parameters: { period: '时间范围：all, yearly, quarterly, monthly, weekly, daily。默认为 `weekly`' },
     name: '热门话题',
     maintainers: [],
+    features: {
+        requirePuppeteer: true,
+        antiCrawler: true,
+    },
     handler,
 };
 
@@ -17,7 +21,7 @@ async function handler(ctx): Promise<Data> {
     const { period = 'weekly' } = ctx.req.param();
     const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30;
 
-    const { topic_list } = await createFetch(`/top.json?period=${period}`);
+    const { topic_list } = await fetchJson(`/top.json?period=${period}`);
     const categoryMap = await getCategoryMap();
 
     const items = topic_list.topics.slice(0, limit).map((topic) => ({
