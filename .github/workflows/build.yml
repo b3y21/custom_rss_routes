@@ -80,5 +80,7 @@ jobs:
           tags: |
             ${{ steps.image.outputs.name }}:latest
             ${{ steps.image.outputs.name }}:${{ steps.rsshub.outputs.short_sha }}
+          build-args: |
+            PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
           cache-from: type=gha
           cache-to: type=gha,mode=max
