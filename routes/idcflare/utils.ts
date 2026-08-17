@@ -33,5 +33,3 @@ async function getCategoryMap(): Promise<Map<number, string>> {
 }
 
 export { rootUrl, createFetch, getCategoryMap };
-
-export { rootUrl, createFetch };
