@@ -1,7 +1,6 @@
 import type { Data, Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
 
-import { fetchJson, getCategoryMap, rootUrl } from './utils';
+import { fetchJson, getCategoryMap, getTopicItems, rootUrl } from './utils';
 
 export const route: Route = {
     path: '/top/:period?',
@@ -24,15 +23,7 @@ async function handler(ctx): Promise<Data> {
     const { topic_list } = await fetchJson(`/top.json?period=${period}`);
     const categoryMap = await getCategoryMap();
 
-    const items = topic_list.topics.slice(0, limit).map((topic) => ({
-        title: topic.title,
-        link: `${rootUrl}/t/topic/${topic.id}`,
-        pubDate: parseDate(topic.bumped_at),
-        category: [
-            ...(categoryMap.get(topic.category_id) ? [categoryMap.get(topic.category_id)] : []),
-            ...(topic.tags ? topic.tags.map((tag) => tag.name) : []),
-        ],
-    }));
+    const items = await getTopicItems(topic_list.topics.slice(0, limit), categoryMap);
 
     return {
         title: `IDC Flare - 热门话题 (${period})`,

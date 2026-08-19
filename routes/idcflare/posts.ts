@@ -24,7 +24,7 @@ async function handler(ctx): Promise<Data> {
 
     const items = latest_posts.slice(0, limit).map((post) => {
         // 楼中楼回复：reply_to_post_number 指向被回复的楼层
-        const isReply = post.reply_to_post_number != null;
+        const isReply = post.reply_to_post_number !== null;
         const replyTarget = isReply ? `回复 #${post.reply_to_post_number} @${post.reply_to_user}` : '';
 
         return {
